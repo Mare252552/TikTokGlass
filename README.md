@@ -29,9 +29,10 @@ Requires macOS and full **Xcode 26+ with iPhoneOS SDK 26+**. No Theos or extra l
 export DEVELOPER_DIR=/Applications/Xcode_26.3.app/Contents/Developer # adjust to installed Xcode 26
 bash scripts/build.sh
 bash scripts/analyze.sh
+bash scripts/smoke.sh # needs an installed iOS 26 iPhone simulator runtime
 ```
 
-Output: `build/TikTokGlass.dylib`. Deployment target iOS 26.0; architecture arm64 (supported on iPhone 17 Pro; arm64e-only build is unnecessary). GitHub Actions selects an installed Xcode 26, builds and checks the device Mach-O, runs static analysis, uploads the artifact, and publishes a prerelease for `v*` tags. No signing credentials are stored in the repository.
+Output: `build/TikTokGlass.dylib`. Deployment target iOS 26.0; architecture arm64 (supported on iPhone 17 Pro; arm64e-only build is unnecessary). GitHub Actions selects an installed Xcode 26, builds and checks the device Mach-O, runs static analysis and synthetic UIKit simulator smoke tests, uploads the artifact, and publishes a prerelease for `v*` tags. The smoke fixtures check native effect objects, accessor/hierarchy rejection, no duplicate overlays, restoration, control ownership and preferences; they do not run TikTok. No signing credentials are stored in the repository.
 
 ## Sideloadly installation (no jailbreak dependency)
 

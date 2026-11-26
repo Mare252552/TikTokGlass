@@ -25,6 +25,8 @@ jobs:
         run: bash scripts/build.sh
       - name: Clang static analysis
         run: bash scripts/analyze.sh
+      - name: UIKit behavior smoke tests on iOS 26 simulator
+        run: bash scripts/smoke.sh
       - name: Upload TikTokGlass dylib
         uses: actions/upload-artifact@v4
         with:
@@ -35,6 +37,7 @@ jobs:
             build/binary-info.txt
             build/load-commands.txt
             build/toolchain.txt
+            build/smoke-results.json
           if-no-files-found: error
           retention-days: 30
       - name: Publish experimental release
@@ -42,7 +45,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" build/TikTokGlass.dylib build/SHA256SUMS build/binary-info.txt build/toolchain.txt --title "TikTokGlass $GITHUB_REF_NAME" --prerelease --notes "Native UIGlassEffect injection module for iOS 26+. Compiled for device arm64 with binary checks and Clang static analysis. TikTok 47.9.0 and iPhone 17 Pro have NOT been tested on a physical device. Read README and docs/COMPATIBILITY.md before installation."
+          gh release create "$GITHUB_REF_NAME" build/TikTokGlass.dylib build/SHA256SUMS build/binary-info.txt build/toolchain.txt build/smoke-results.json --title "TikTokGlass $GITHUB_REF_NAME" --prerelease --notes "Native UIGlassEffect injection module for iOS 26+. Compiled for device arm64 with binary checks, Clang static analysis and synthetic UIKit simulator tests. TikTok 47.9.0 and iPhone 17 Pro have NOT been tested on a physical device. Read README and docs/COMPATIBILITY.md before installation."
       - name: Upload diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
