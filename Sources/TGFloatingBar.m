@@ -52,8 +52,9 @@
         if(native) {
             _nativeBar=[[UITabBar alloc] initWithFrame:host.bounds];_nativeBar.accessibilityIdentifier=@"TikTokGlass.NativeTabBar";
             _nativeBar.delegate=self;_nativeBar.items=items;_nativeBar.itemPositioning=UITabBarItemPositioningFill;
+            UITabBarAppearance *clear=[_nativeBar.standardAppearance copy];clear.backgroundEffect=nil;clear.backgroundColor=UIColor.clearColor;clear.backgroundImage=nil;clear.shadowColor=UIColor.clearColor;_nativeBar.standardAppearance=clear;_nativeBar.scrollEdgeAppearance=clear;_nativeBar.backgroundColor=UIColor.clearColor;
             // Keep UIKit's default iOS 26 material and selection lens. Do not replace its private subviews or gestures.
-            [host addSubview:_nativeBar];_container.hidden=YES;for(UIView *button in buttons) button.alpha=0;
+            [host addSubview:_nativeBar];_container.hidden=NO;_lens.hidden=YES;for(UIView *button in buttons) button.alpha=0;
         }
         {
             UIPanGestureRecognizer *pan=[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panned:)];pan.delegate=self;[host addGestureRecognizer:pan];[_gestures addObject:pan];
@@ -109,7 +110,7 @@
         button.frame=CGRectMake(slot*i,0,slot,height);
         if(!self.dragging && (([button isKindOfClass:UIControl.class] && [(UIControl *)button isSelected]) || (button.accessibilityTraits&UIAccessibilityTraitSelected))) self.selected=i;
     }
-    if(self.nativeBar && !self.dragging) {self.container.hidden=YES;self.nativeBar.selectedItem=self.nativeBar.items[self.selected];for(UIView *button in self.buttons) button.alpha=0;return;}
+    if(self.nativeBar && !self.dragging) {self.container.hidden=NO;self.lens.hidden=YES;self.nativeBar.selectedItem=self.nativeBar.items[self.selected];for(UIView *button in self.buttons) button.alpha=0;return;}
     if(self.dragging) return;
     CGRect target=CGRectMake(slot*self.selected+3,4,slot-6,height-8);
     self.lens.layer.cornerRadius=(height-8)/2;self.lens.clipsToBounds=YES;
