@@ -2,9 +2,11 @@
 #import "TGSettings.h"
 #import "TGCompatibility.h"
 #import <objc/runtime.h>
+#import "TGFloatingBar.h"
 
 @interface TGGlassState : NSObject
 @property(nonatomic,weak) UIView *host;
+@property(nonatomic,strong) TGFloatingBar *floating;
 @property(nonatomic,strong) UIVisualEffectView *effectView;
 @property(nonatomic,strong) UIColor *background;
 @property(nonatomic,strong) id standardAppearance;
@@ -28,7 +30,7 @@ static char stateKey;
     UIGlassEffect *effect=[UIGlassEffect effectWithStyle:UIGlassEffectStyleRegular];
     effect.interactive=YES;
     // Tint strength only. There is no public Liquid Glass intensity API.
-    effect.tintColor=[UIColor.secondarySystemBackgroundColor colorWithAlphaComponent:0.02+0.18*[TGSettings shared].intensity];
+    effect.tintColor=[TGSettings shared].intensity>0.5 ? [UIColor.labelColor colorWithAlphaComponent:0.04*([TGSettings shared].intensity-0.5)] : nil;
     return effect;
 }
 - (void)animate:(void (^)(void))changes {
@@ -53,8 +55,16 @@ static char stateKey;
         TGGlassState *s=[self state:view kind:0];
         if (!s.effectView) {s.effectView=[self newEffectView];[view insertSubview:s.effectView atIndex:0];}
         if (s.effectView.superview!=view) [view insertSubview:s.effectView atIndex:0];
-        s.effectView.frame=view.bounds;
-        s.effectView.layer.cornerRadius=fmin(22,view.bounds.size.height/2);s.effectView.clipsToBounds=YES;
+                CGRect plate=view.bounds;
+        if ([category isEqualToString:@"videoControls"] || [category isEqualToString:@"comments"]) {
+            UIImageView *icon=nil;
+            if([view isKindOfClass:UIButton.class]) icon=((UIButton *)view).imageView;
+            if(!icon || !icon.image) for(UIView *child in view.subviews) if([child isKindOfClass:UIImageView.class] && ((UIImageView *)child).image && child.bounds.size.width<=48 && child.bounds.size.height<=48) {icon=(id)child;break;}
+            if(icon && icon.image && !CGRectIsEmpty(icon.bounds)) plate=CGRectInset([icon convertRect:icon.bounds toView:view],-4,-4);
+            else {CGFloat side=fmin(36,fmin(view.bounds.size.width,view.bounds.size.height));plate=CGRectMake((view.bounds.size.width-side)/2,0,side,side);}
+        }
+        s.effectView.frame=plate;
+        s.effectView.layer.cornerRadius=fmin(22,s.effectView.bounds.size.height/2);s.effectView.clipsToBounds=YES;
         view.backgroundColor=UIColor.clearColor;
         if (s.intensity!=[TGSettings shared].intensity) {s.intensity=[TGSettings shared].intensity; [self animate:^{s.effectView.effect=[self effect];}];}
         if ([view isKindOfClass:UIControl.class]) {
@@ -80,28 +90,8 @@ static char stateKey;
 - (void)applyToTabBar:(UIView *)bar buttons:(NSArray<UIView *> *)buttons {
     if (@available(iOS 26.0,*)) {
         TGGlassState *s=[self state:bar kind:1];
-        if (!s.effectView) {
-            UIGlassContainerEffect *container=[UIGlassContainerEffect new];container.spacing=12;
-            s.effectView=[self newEffectView];s.effectView.effect=container;
-            [bar insertSubview:s.effectView atIndex:0];
-        }
-        s.effectView.frame=bar.bounds;bar.backgroundColor=UIColor.clearColor;
-        if (s.effectView.superview!=bar) [bar insertSubview:s.effectView atIndex:0];
-        if (s.plateCount!=buttons.count) {
-            for (UIView *v in [s.effectView.contentView.subviews copy]) [v removeFromSuperview];
-            for (NSUInteger i=0;i<buttons.count;i++) [s.effectView.contentView addSubview:[self newEffectView]];
-            s.plateCount=buttons.count;s.intensity=-1;
-        }
-        BOOL update=s.intensity!=[TGSettings shared].intensity;s.intensity=[TGSettings shared].intensity;
-        [buttons enumerateObjectsUsingBlock:^(UIView *button,NSUInteger i,BOOL *stop){
-            UIVisualEffectView *plate=(id)s.effectView.contentView.subviews[i];
-            CGRect rect=[button convertRect:button.bounds toView:bar];
-            rect=CGRectIntersection(bar.bounds,CGRectInset(rect,3,2));
-            if (CGRectIsNull(rect) || CGRectIsEmpty(rect)) {plate.hidden=YES;return;}
-            plate.hidden=NO;plate.frame=rect;plate.layer.cornerRadius=fmin(26,rect.size.height/2);plate.clipsToBounds=YES;
-            if(update) [self animate:^{plate.effect=[self effect];}];
-        }];
-        TGRecord(bar,@"tabBar");
+        if (!s.floating) s.floating=[[TGFloatingBar alloc] initWithHost:bar buttons:buttons];
+        [s.floating update];TGRecord(bar,@"floatingTabBar");
     }
 }
 - (void)applyToNativeBar:(UIView *)bar {
@@ -132,6 +122,7 @@ static char stateKey;
 }
 - (void)restore:(TGGlassState *)s {
     UIView *view=s.host;if (!view) return;
+    [s.floating restore];
     [s.effectView removeFromSuperview];
     if (s.kind<2) view.backgroundColor=s.background;
     if ([view isKindOfClass:UIControl.class]) {

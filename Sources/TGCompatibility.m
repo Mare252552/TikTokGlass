@@ -66,10 +66,10 @@ NSString *TGCategory(UIView *view) {
     if (search || ContainsAny(name,@[@"search",@"pretraga"])) return @"search";
     if (ContainsAny(context,@[@"comment"])) return @"comments";
     if (ContainsAny(context,@[@"profile"])) return @"profile";
-    if (ContainsAny(context,@[@"settings",@"menu",@"actionsheet",@"alert",@"share"])) return @"menus";
+    if (ContainsAny(context,@[@"settings",@"menu",@"actionsheet",@"alert",@"share",@"inbox",@"message"])) return @"menus";
     if (ContainsAny(context,@[@"player",@"feed",@"playvideo"])) {
         // Only individually identified controls, not every button on the video canvas.
-        if (ContainsAny(name,@[@"share",@"comment",@"pause",@"play",@"mute",@"speed"]) ||
+        if (ContainsAny(name,@[@"share",@"comment",@"pause",@"play",@"mute",@"speed",@"like",@"save",@"favorite",@"bookmark"]) ||
             [view isKindOfClass:NSClassFromString(@"AWEFeedVideoButton")]) return @"videoControls";
         return nil;
     }
@@ -85,7 +85,7 @@ void TGRecord(UIView *view, NSString *category) {
     if (!observed[key] && observed.count<100) { observed[key]=@1; NSLog(@"[TikTokGlass] matched %@",key); }
 }
 NSString *TGDiagnosticReport(void) {
-    NSMutableString *s=[NSMutableString stringWithFormat:@"TikTokGlass 0.1.0\nTikTok: %@\niOS: %@\nNative glass API: %@\nTTKTabBar class: %@\nReduce Transparency: %@\nReduce Motion: %@\n47.9.0 device validation: NOT PERFORMED\nObserved class/category matches (Debug Mode only):\n",
+    NSMutableString *s=[NSMutableString stringWithFormat:@"TikTokGlass 2.0.0\nTikTok: %@\niOS: %@\nNative glass API: %@\nTTKTabBar class: %@\nReduce Transparency: %@\nReduce Motion: %@\n47.9.0 device validation: NOT PERFORMED\nObserved class/category matches (Debug Mode only):\n",
       [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"] ?: @"unknown",
       UIDevice.currentDevice.systemVersion,TGHasGlassAPI()?@"available":@"unavailable",
       NSClassFromString(@"TTKTabBar")?@"present":@"absent",UIAccessibilityIsReduceTransparencyEnabled()?@"yes":@"no",UIAccessibilityIsReduceMotionEnabled()?@"yes":@"no"];

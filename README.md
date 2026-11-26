@@ -1,3 +1,15 @@
+# TikTokGlass 2.0.0
+
+2.0 redesign: 18pt side insets, 62pt floating bar, 10pt above bottom safe area. A real UITabBar with original extracted TikTok images, titles and public UIControl action forwarding is preferred only if every original button has a verified target/action and image. UIKit owns the native selection lens and touch handling in that mode. Host SDK compatibility behavior can affect the appearance; exact iOS 26 native drag behavior requires device testing. No root UITabBarController replacement is attempted because TikTok owns routing and Create is an action.
+
+When native action bridging cannot be verified, original controls stay in place with a real UIGlassEffect moving lens and horizontal drag tracking; this custom UIKit spring path is NOT claimed to be identical to Apple's UITabBar animation. Original controls remain responsible for taps, and drag activation only forwards verified public UIControl events. Missing components are skipped. No blur or drawn border imitates glass.
+
+Feed/comment plates follow the image view bounds plus 4pt padding (36pt fallback); counters do not define plate size. Broad direct decorative bar leaves are hidden reversibly, tint no longer adds a gray system background, and original icon shapes, settings suite and arm64 jailbreak-free dependencies remain. Discovery runs across all foreground scene windows, including profile, search and inbox controllers; actual coverage is conditional, not certified on every TikTok page.
+
+Why 0.1 looked wrong: full-control bounds included counters, regular glass was tinted with secondarySystemBackgroundColor, and layers were inserted below possibly opaque app subviews. Native material cannot repair an opaque host backdrop automatically. 2.0 removes only recognized broad decorative leaves, preserving content and controls.
+
+Build, Clang analysis and synthetic UIKit tests run in Actions before publishing the 2.0 experimental dylib. No physical iPhone or live TikTok 47.9.0 was available. Screenshot attachments were not present in the received message, so geometric requirements, rather than an observed pixel comparison, guide this implementation. Earlier verification records below apply to 0.1 only; the new Actions run is authoritative for 2.0.
+
 # TikTokGlass
 
 Native Apple Liquid Glass injection library for TikTok on **iOS 26+**, compiled as an **arm64 device dylib**. Priority target: **TikTok 47.9.0 / iPhone 17 Pro**. Experimental: neither this TikTok version nor a physical device has been validated. A successful build is not proof of compatibility or complete visual coverage.
