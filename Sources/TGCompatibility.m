@@ -85,7 +85,7 @@ void TGRecord(UIView *view, NSString *category) {
     if (!observed[key] && observed.count<100) { observed[key]=@1; NSLog(@"[TikTokGlass] matched %@",key); }
 }
 NSString *TGDiagnosticReport(void) {
-    NSMutableString *s=[NSMutableString stringWithFormat:@"TikTokGlass 2.0.0\nTikTok: %@\niOS: %@\nNative glass API: %@\nTTKTabBar class: %@\nReduce Transparency: %@\nReduce Motion: %@\n47.9.0 device validation: NOT PERFORMED\nObserved class/category matches (Debug Mode only):\n",
+    NSMutableString *s=[NSMutableString stringWithFormat:@"TikTokGlass 2.1.0\nTikTok: %@\niOS: %@\nNative glass API: %@\nTTKTabBar class: %@\nReduce Transparency: %@\nReduce Motion: %@\n47.9.0 device validation: NOT PERFORMED\nObserved class/category matches (Debug Mode only):\n",
       [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"] ?: @"unknown",
       UIDevice.currentDevice.systemVersion,TGHasGlassAPI()?@"available":@"unavailable",
       NSClassFromString(@"TTKTabBar")?@"present":@"absent",UIAccessibilityIsReduceTransparencyEnabled()?@"yes":@"no",UIAccessibilityIsReduceMotionEnabled()?@"yes":@"no"];

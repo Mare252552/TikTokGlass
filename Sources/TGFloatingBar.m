@@ -54,7 +54,8 @@
             _nativeBar.delegate=self;_nativeBar.items=items;_nativeBar.itemPositioning=UITabBarItemPositioningFill;
             // Keep UIKit's default iOS 26 material and selection lens. Do not replace its private subviews or gestures.
             [host addSubview:_nativeBar];_container.hidden=YES;for(UIView *button in buttons) button.alpha=0;
-        } else {
+        }
+        {
             UIPanGestureRecognizer *pan=[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panned:)];pan.delegate=self;[host addGestureRecognizer:pan];[_gestures addObject:pan];
         }
     }return self;
@@ -73,7 +74,8 @@
 - (void)panned:(UIPanGestureRecognizer *)pan {
     CGFloat slot=self.host.bounds.size.width/self.buttons.count;CGPoint p=[pan locationInView:self.host];
     if(pan.state==UIGestureRecognizerStateBegan || pan.state==UIGestureRecognizerStateChanged) {
-        self.dragging=YES;self.lens.center=CGPointMake(fmax(slot/2,fmin(self.host.bounds.size.width-slot/2,p.x)),31);
+        self.dragging=YES;self.container.hidden=NO;self.lens.hidden=NO;if(self.nativeBar) self.nativeBar.selectedItem=nil;
+        self.lens.bounds=CGRectMake(0,0,slot-6,self.host.bounds.size.height-8);self.lens.layer.cornerRadius=(self.host.bounds.size.height-8)/2;self.lens.clipsToBounds=YES;self.lens.center=CGPointMake(fmax(slot/2,fmin(self.host.bounds.size.width-slot/2,p.x)),self.host.bounds.size.height/2);
     } else {
         self.dragging=NO;
         if(pan.state==UIGestureRecognizerStateEnded) {NSUInteger index=MIN(self.buttons.count-1,(NSUInteger)fmax(0,floor(p.x/slot)));if([self.buttons[index] isKindOfClass:UIControl.class]) [self activate:index];}
@@ -91,23 +93,26 @@
     UIWindow *window=host.window;
     if(window && host.superview) {
         CGFloat bottom=window.bounds.size.height-window.safeAreaInsets.bottom-10;
-        CGRect floating=CGRectMake(18,bottom-62,window.bounds.size.width-36,62);
+        CGFloat h=TGSettings.shared.barHeight,inset=TGSettings.shared.barInset;
+        CGRect floating=CGRectMake(inset,bottom-h,window.bounds.size.width-2*inset,h);
         host.frame=[window convertRect:floating toView:host.superview];
     }
     host.backgroundColor=UIColor.clearColor;host.clipsToBounds=NO;
     self.container.frame=host.bounds;self.body.frame=host.bounds;
-    self.nativeBar.frame=host.bounds;self.nativeBar.layer.cornerRadius=31;self.nativeBar.clipsToBounds=YES;
-    self.body.layer.cornerRadius=31;self.body.clipsToBounds=YES;
+    self.body.alpha=TGSettings.shared.glassOpacity;self.lens.alpha=TGSettings.shared.glassOpacity;
+    CGFloat height=host.bounds.size.height;
+    self.nativeBar.frame=host.bounds;self.nativeBar.layer.cornerRadius=height/2;self.nativeBar.clipsToBounds=YES;
+    self.body.layer.cornerRadius=height/2;self.body.clipsToBounds=YES;
     CGFloat slot=host.bounds.size.width/self.buttons.count;
     for(NSUInteger i=0;i<self.buttons.count;i++) {
         UIView *button=self.buttons[i];button.backgroundColor=UIColor.clearColor;
-        button.frame=CGRectMake(slot*i,0,slot,62);
+        button.frame=CGRectMake(slot*i,0,slot,height);
         if(!self.dragging && (([button isKindOfClass:UIControl.class] && [(UIControl *)button isSelected]) || (button.accessibilityTraits&UIAccessibilityTraitSelected))) self.selected=i;
     }
-    if(self.nativeBar) {self.nativeBar.selectedItem=self.nativeBar.items[self.selected];for(UIView *button in self.buttons) button.alpha=0;return;}
+    if(self.nativeBar && !self.dragging) {self.container.hidden=YES;self.nativeBar.selectedItem=self.nativeBar.items[self.selected];for(UIView *button in self.buttons) button.alpha=0;return;}
     if(self.dragging) return;
-    CGRect target=CGRectMake(slot*self.selected+3,4,slot-6,54);
-    self.lens.layer.cornerRadius=27;self.lens.clipsToBounds=YES;
+    CGRect target=CGRectMake(slot*self.selected+3,4,slot-6,height-8);
+    self.lens.layer.cornerRadius=(height-8)/2;self.lens.clipsToBounds=YES;
     if(CGRectEqualToRect(target,self.lens.frame)) return;
     if(UIAccessibilityIsReduceMotionEnabled() || CGRectIsEmpty(self.lens.frame)) self.lens.frame=target;
     else [UIView animateWithDuration:0.38 delay:0 usingSpringWithDamping:0.86 initialSpringVelocity:0 options:UIViewAnimationOptionBeginFromCurrentState|UIViewAnimationOptionAllowUserInteraction animations:^{self.lens.frame=target;} completion:nil];

@@ -17,6 +17,8 @@
 @property(nonatomic) double intensity;
 @property(nonatomic) NSUInteger plateCount;
 @property(nonatomic) NSInteger kind;
+@property(nonatomic) CGRect originalFrame;
+@property(nonatomic,strong) UIPanGestureRecognizer *nativePan;
 @end
 @implementation TGGlassState
 @end
@@ -41,7 +43,7 @@ static char stateKey;
 - (TGGlassState *)state:(UIView *)view kind:(NSInteger)kind {
     TGGlassState *s=objc_getAssociatedObject(view,&stateKey);
     if (!s) {
-        s=[TGGlassState new]; s.host=view;s.background=view.backgroundColor;s.kind=kind;s.intensity=-1;
+        s=[TGGlassState new]; s.host=view;s.originalFrame=view.frame;s.background=view.backgroundColor;s.kind=kind;s.intensity=-1;
         objc_setAssociatedObject(view,&stateKey,s,OBJC_ASSOCIATION_RETAIN_NONATOMIC);[self.states addObject:s];
     } s.visited=YES; return s;
 }
@@ -97,9 +99,15 @@ static char stateKey;
 - (void)applyToNativeBar:(UIView *)bar {
     if (@available(iOS 26.0,*)) {
         TGGlassState *s=[self state:bar kind:2];
+        if([bar isKindOfClass:UITabBar.class] && bar.window && bar.superview) {
+            UIWindow *window=bar.window;CGFloat h=TGSettings.shared.barHeight,inset=TGSettings.shared.barInset;
+            bar.frame=[window convertRect:CGRectMake(inset,window.bounds.size.height-window.safeAreaInsets.bottom-10-h,window.bounds.size.width-2*inset,h) toView:bar.superview];
+            if(!s.nativePan) {s.nativePan=[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(nativePanned:)];[bar addGestureRecognizer:s.nativePan];}
+        }
         if (!s.effectView) {s.effectView=[self newEffectView];[bar insertSubview:s.effectView atIndex:0];}
         if (s.effectView.superview!=bar) [bar insertSubview:s.effectView atIndex:0];
         s.effectView.frame=bar.bounds;
+        if([bar isKindOfClass:UITabBar.class]) s.effectView.alpha=TGSettings.shared.glassOpacity;
         s.effectView.layer.cornerRadius=fmin(28,bar.bounds.size.height/2);s.effectView.clipsToBounds=YES;
         if ([bar isKindOfClass:UITabBar.class]) {
             UITabBar *tab=(id)bar;
@@ -120,9 +128,17 @@ static char stateKey;
         s.intensity=[TGSettings shared].intensity;TGRecord(bar,@"nativeBar");
     }
 }
+- (void)nativePanned:(UIPanGestureRecognizer *)gesture {
+    UITabBar *bar=(id)gesture.view;if(!bar.items.count || bar.bounds.size.width<=0) return;
+    CGFloat x=[gesture locationInView:bar].x;NSUInteger index=MIN(bar.items.count-1,(NSUInteger)fmax(0,floor(x/bar.bounds.size.width*bar.items.count)));
+    bar.selectedItem=bar.items[index];
+    if(gesture.state==UIGestureRecognizerStateEnded && [bar.delegate respondsToSelector:@selector(tabBar:didSelectItem:)]) [bar.delegate tabBar:bar didSelectItem:bar.selectedItem];
+}
 - (void)restore:(TGGlassState *)s {
     UIView *view=s.host;if (!view) return;
     [s.floating restore];
+    if(s.nativePan) [view removeGestureRecognizer:s.nativePan];
+    if([view isKindOfClass:UITabBar.class] && !s.floating) view.frame=s.originalFrame;
     [s.effectView removeFromSuperview];
     if (s.kind<2) view.backgroundColor=s.background;
     if ([view isKindOfClass:UIControl.class]) {

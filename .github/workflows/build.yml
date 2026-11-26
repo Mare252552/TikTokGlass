@@ -28,8 +28,6 @@ jobs:
         run: bash scripts/build.sh
       - name: Clang static analysis
         run: bash scripts/analyze.sh
-      - name: UIKit behavior smoke tests on iOS 26 simulator
-        run: bash scripts/smoke.sh
       - name: Upload TikTokGlass dylib
         uses: actions/upload-artifact@v4
         with:
@@ -43,13 +41,15 @@ jobs:
             build/smoke-results.json
           if-no-files-found: error
           retention-days: 30
+      - name: UIKit behavior smoke tests on iOS 26 simulator
+        run: bash scripts/smoke.sh
       - name: Publish experimental release
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="2.0.0-${GITHUB_SHA:0:7}"
-          gh release create "$TAG" --target "$GITHUB_SHA" build/TikTokGlass.dylib build/SHA256SUMS build/binary-info.txt build/toolchain.txt build/smoke-results.json --title "TikTokGlass 2.0.0 — experimental" --prerelease --notes "TikTokGlass 2.0: floating native UITabBar when all five original actions/images can be bridged safely; original controls with real draggable UIGlassEffect lens otherwise. The custom fallback is not certified as Apple's exact UITabBar animation. Compiled for device arm64, binary checked, Clang analyzed, and synthetic UIKit tested. TikTok 47.9.0, actual native drag/refraction and all-page coverage have NOT been tested on a physical iPhone. Existing settings/Sideloadly compatibility retained. See README."
+          TAG="2.1.0-${GITHUB_SHA:0:7}"
+          gh release create "$TAG" --target "$GITHUB_SHA" build/TikTokGlass.dylib build/SHA256SUMS build/binary-info.txt build/toolchain.txt build/smoke-results.json --title "TikTokGlass 2.1.0 — experimental" --prerelease --notes "TikTokGlass 2.0: floating native UITabBar when all five original actions/images can be bridged safely; original controls with real draggable UIGlassEffect lens otherwise. The custom fallback is not certified as Apple's exact UITabBar animation. Compiled for device arm64, binary checked, Clang analyzed, and synthetic UIKit tested. TikTok 47.9.0, actual native drag/refraction and all-page coverage have NOT been tested on a physical iPhone. Existing settings/Sideloadly compatibility retained. See README."
       - name: Upload diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4

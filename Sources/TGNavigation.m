@@ -70,10 +70,10 @@ static char gestureKey, launcherKey;
                 UIView *view=queue[cursor++];
                 if (view.hidden || view.alpha<0.05 || TGIsOwnedView(view) || [view isKindOfClass:UIVisualEffectView.class]) continue;
                 if ([view isKindOfClass:NSClassFromString(@"WKWebView")]) continue;
-                if ([view isKindOfClass:UITabBar.class]) {if([settings enabled:@"tabBar"]) [glass applyToNativeBar:view];continue;}
-                if ([view isKindOfClass:UINavigationBar.class]) {if([settings enabled:@"navigation"]) [glass applyToNativeBar:view];continue;}
                 NSArray *buttons=TGTabButtons(view);
                 if (buttons) {if([settings enabled:@"tabBar"]) [glass applyToTabBar:view buttons:buttons];continue;}
+                if ([view isKindOfClass:UITabBar.class]) {if([settings enabled:@"tabBar"]) [glass applyToNativeBar:view];continue;}
+                if ([view isKindOfClass:UINavigationBar.class]) {if([settings enabled:@"navigation"]) [glass applyToNativeBar:view];continue;}
                 NSString *category=TGCategory(view);
                 if (category && [settings enabled:category]) {[glass applyToView:view category:category];continue;}
                 // Copy before appending because effect insertion mutates subviews.
