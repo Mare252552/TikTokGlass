@@ -19,6 +19,8 @@ Settings: **triple-tap with three fingers** anywhere in the main app window. Wit
 
 See [Actions](https://github.com/Mare252552/TikTokGlass/actions) for build logs/artifacts and [Releases](https://github.com/Mare252552/TikTokGlass/releases) for experimental tagged binaries. GitHub Actions artifact downloads normally require GitHub sign-in. Release dylibs are direct public downloads.
 
+The published [0.1.0 experimental dylib](https://github.com/Mare252552/TikTokGlass/releases/download/0.1.0-experimental/TikTokGlass.dylib) has a successful device build and seven groups of UIKit smoke checks. See [exact validation evidence and remaining limits](docs/VERIFICATION.md).
+
 Each build includes SHA256SUMS, toolchain details, dependency listing and Mach-O load commands. Ad-hoc signature is a build integrity check; Sideloadly must sign the final injected app with your identity.
 
 ## Build
