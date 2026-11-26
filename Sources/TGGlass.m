@@ -52,6 +52,7 @@ static char stateKey;
     if (@available(iOS 26.0,*)) {
         TGGlassState *s=[self state:view kind:0];
         if (!s.effectView) {s.effectView=[self newEffectView];[view insertSubview:s.effectView atIndex:0];}
+        if (s.effectView.superview!=view) [view insertSubview:s.effectView atIndex:0];
         s.effectView.frame=view.bounds;
         s.effectView.layer.cornerRadius=fmin(22,view.bounds.size.height/2);s.effectView.clipsToBounds=YES;
         view.backgroundColor=UIColor.clearColor;
@@ -85,6 +86,7 @@ static char stateKey;
             [bar insertSubview:s.effectView atIndex:0];
         }
         s.effectView.frame=bar.bounds;bar.backgroundColor=UIColor.clearColor;
+        if (s.effectView.superview!=bar) [bar insertSubview:s.effectView atIndex:0];
         if (s.plateCount!=buttons.count) {
             for (UIView *v in [s.effectView.contentView.subviews copy]) [v removeFromSuperview];
             for (NSUInteger i=0;i<buttons.count;i++) [s.effectView.contentView addSubview:[self newEffectView]];
@@ -105,19 +107,26 @@ static char stateKey;
 - (void)applyToNativeBar:(UIView *)bar {
     if (@available(iOS 26.0,*)) {
         TGGlassState *s=[self state:bar kind:2];
+        if (!s.effectView) {s.effectView=[self newEffectView];[bar insertSubview:s.effectView atIndex:0];}
+        if (s.effectView.superview!=bar) [bar insertSubview:s.effectView atIndex:0];
+        s.effectView.frame=bar.bounds;
+        s.effectView.layer.cornerRadius=fmin(28,bar.bounds.size.height/2);s.effectView.clipsToBounds=YES;
         if ([bar isKindOfClass:UITabBar.class]) {
             UITabBar *tab=(id)bar;
             if (!s.standardAppearance) {s.standardAppearance=[tab.standardAppearance copy];s.scrollAppearance=[tab.scrollEdgeAppearance copy];}
             if (s.intensity==[TGSettings shared].intensity) return;
-            UITabBarAppearance *a=[tab.standardAppearance copy];a.backgroundColor=UIColor.clearColor;a.backgroundImage=nil;a.backgroundEffect=[self effect];a.shadowColor=UIColor.clearColor;
+            // UIBarAppearance.backgroundEffect is UIBlurEffect-typed even in iOS 26.
+            // Use a real glass effect VIEW instead; never cast glass to blur.
+            UITabBarAppearance *a=[tab.standardAppearance copy];a.backgroundColor=UIColor.clearColor;a.backgroundImage=nil;a.backgroundEffect=nil;a.shadowColor=UIColor.clearColor;
             tab.standardAppearance=a;tab.scrollEdgeAppearance=a;
         } else if ([bar isKindOfClass:UINavigationBar.class]) {
             UINavigationBar *nav=(id)bar;
             if (!s.standardAppearance) {s.standardAppearance=[nav.standardAppearance copy];s.scrollAppearance=[nav.scrollEdgeAppearance copy];s.compactAppearance=[nav.compactAppearance copy];s.compactScrollAppearance=[nav.compactScrollEdgeAppearance copy];}
             if (s.intensity==[TGSettings shared].intensity) return;
-            UINavigationBarAppearance *a=[nav.standardAppearance copy];a.backgroundColor=UIColor.clearColor;a.backgroundImage=nil;a.backgroundEffect=[self effect];
+            UINavigationBarAppearance *a=[nav.standardAppearance copy];a.backgroundColor=UIColor.clearColor;a.backgroundImage=nil;a.backgroundEffect=nil;
             nav.standardAppearance=a;nav.scrollEdgeAppearance=a;nav.compactAppearance=a;nav.compactScrollEdgeAppearance=a;
         }
+        [self animate:^{s.effectView.effect=[self effect];}];
         s.intensity=[TGSettings shared].intensity;TGRecord(bar,@"nativeBar");
     }
 }

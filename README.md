@@ -6,7 +6,7 @@ Native Apple Liquid Glass injection library for TikTok on **iOS 26+**, compiled 
 
 - Real `UIGlassEffect` (regular style, interactive enabled) inside `UIVisualEffectView`; no `UIBlurEffect` fallback or simulated glass.
 - Custom `TTKTabBar`: ABI-checked `buttons` accessor, existing control frames, one `UIGlassContainerEffect` with individual rounded glass backplates. Home/Friends/Create/Inbox/Profile keep their original controls, labels, badges and actions. No remapping or hardcoded tab indexes.
-- Native `UITabBar` / `UINavigationBar`: copy appearances and set their backgroundEffect to real glass; restore when disabled.
+- Native `UITabBar` / `UINavigationBar`: copy appearances, clear their built-in blur backgrounds, and insert a separate real glass effect view; restore when disabled. `UIBarAppearance.backgroundEffect` accepts UIBlurEffect, so glass is never assigned or cast to that property.
 - Runtime discovery of small UIKit buttons in profile, comment, menu/share/dialog, navigation and player contexts, plus search bars/search buttons. Unrecognized components are skipped. This is conditional coverage, not a claim that every TikTok screen has been adapted.
 - Native effect-property animations and control press tint changes; original app navigation and transitions remain in charge. No custom guaranteed glass morph during TikTok tab changes.
 - Persistent switches: Enable TikTokGlass, Glass Tab Bar, Glass Navigation, Glass Buttons, Glass Comments, Glass Search, Glass Menus, Glass Video Controls, Glass Profile, Debug Mode; Glass Intensity slider adjusts **tint alpha only**, not Apple's refraction strength.

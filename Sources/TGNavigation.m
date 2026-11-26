@@ -50,7 +50,7 @@ static char gestureKey, launcherKey;
     UIWindow *window=[sender isKindOfClass:UIGestureRecognizer.class]?[(UIGestureRecognizer *)sender view].window:([sender isKindOfClass:UIView.class]?[(UIView *)sender window]:nil);
     if (!window) window=self.windows.firstObject; UIViewController *top=window.rootViewController;
     while (top.presentedViewController && !top.presentedViewController.isBeingDismissed) top=top.presentedViewController;
-    if (!top || [top isKindOfClass:UINavigationController.class] && [((UINavigationController *)top).topViewController isKindOfClass:TGSettingsController.class]) return;
+    if (!top || ([top isKindOfClass:UINavigationController.class] && [((UINavigationController *)top).topViewController isKindOfClass:TGSettingsController.class])) return;
     UINavigationController *nav=[[UINavigationController alloc] initWithRootViewController:[TGSettingsController new]];
     nav.modalPresentationStyle=UIModalPresentationPageSheet;[top presentViewController:nav animated:!UIAccessibilityIsReduceMotionEnabled() completion:nil];
 }
