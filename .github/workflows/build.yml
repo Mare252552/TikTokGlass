@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: tiktokglass-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: macos-15
@@ -45,7 +48,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "2.0.0-experimental" --target "$GITHUB_SHA" build/TikTokGlass.dylib build/SHA256SUMS build/binary-info.txt build/toolchain.txt build/smoke-results.json --title "TikTokGlass 2.0.0 — experimental" --prerelease --notes "Native UIGlassEffect injection module for iOS 26+. Compiled for device arm64 with binary checks, Clang static analysis and synthetic UIKit simulator tests. TikTok 47.9.0 and iPhone 17 Pro have NOT been tested on a physical device. Read README and docs/COMPATIBILITY.md before installation."
+          TAG="2.0.0-${GITHUB_SHA:0:7}"
+          gh release create "$TAG" --target "$GITHUB_SHA" build/TikTokGlass.dylib build/SHA256SUMS build/binary-info.txt build/toolchain.txt build/smoke-results.json --title "TikTokGlass 2.0.0 — experimental" --prerelease --notes "TikTokGlass 2.0: floating native UITabBar when all five original actions/images can be bridged safely; original controls with real draggable UIGlassEffect lens otherwise. The custom fallback is not certified as Apple's exact UITabBar animation. Compiled for device arm64, binary checked, Clang analyzed, and synthetic UIKit tested. TikTok 47.9.0, actual native drag/refraction and all-page coverage have NOT been tested on a physical iPhone. Existing settings/Sideloadly compatibility retained. See README."
       - name: Upload diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4

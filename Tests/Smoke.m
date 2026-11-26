@@ -3,6 +3,7 @@
 #import "TGCompatibility.h"
 #import "TGGlass.h"
 #import "TGSettings.h"
+#import "TGFloatingBar.h"
 #import <stdlib.h>
 @interface TTKTabBar : UIView
 @property(nonatomic,strong) id testButtons;
@@ -14,8 +15,10 @@
 static void Check(BOOL condition,NSString *message) {if(!condition) [NSException raise:@"TestFailure" format:@"%@",message];}
 @interface TGSmokeDelegate : UIResponder <UIApplicationDelegate>
 @property(nonatomic,strong) UIWindow *window;
+@property(nonatomic) NSUInteger forwardedActions;
 @end
 @implementation TGSmokeDelegate
+- (void)fixtureAction:(UIControl *)sender {self.forwardedActions++;}
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)options {
     self.window=[[UIWindow alloc] initWithFrame:CGRectMake(0,0,393,852)];
     self.window.rootViewController=[UIViewController new];[self.window makeKeyAndVisible];
@@ -49,6 +52,23 @@ static void Check(BOOL condition,NSString *message) {if(!condition) [NSException
         UIVisualEffectView *container=nil;for(UIView *v in tab.subviews) if([v isKindOfClass:UIVisualEffectView.class]) container=(id)v;
         Check([container.effect isKindOfClass:UIGlassContainerEffect.class],@"real container effect");Check(container.contentView.subviews.count==2,@"two child plates");
         Check(first.superview==tab && second.superview==tab,@"host navigation controls not reparented");[glass restoreAll];[passed addObject:@"native container and original tab ownership"];
+        TTKTabBar *nativeHost=[[TTKTabBar alloc] initWithFrame:CGRectMake(0,700,393,80)];
+        NSMutableArray *five=[NSMutableArray new];
+        for(NSUInteger i=0;i<5;i++) {UIButton *b=[UIButton buttonWithType:UIButtonTypeSystem];[b setImage:[UIImage systemImageNamed:@"house"] forState:UIControlStateNormal];[b setTitle:@"Fixture" forState:UIControlStateNormal];b.frame=CGRectMake(i*70,0,70,60);[b addTarget:self action:@selector(fixtureAction:) forControlEvents:UIControlEventTouchUpInside];[nativeHost addSubview:b];[five addObject:b];}
+        nativeHost.testButtons=five;[self.window.rootViewController.view addSubview:nativeHost];CGRect savedFrame=nativeHost.frame;
+        TGFloatingBar *adapter=[[TGFloatingBar alloc] initWithHost:nativeHost buttons:five];[adapter update];
+        UITabBar *systemBar=nil;for(UIView *v in nativeHost.subviews) if([v isKindOfClass:UITabBar.class]) systemBar=(id)v;
+        Check(systemBar.items.count==5,@"real native five-item tab bar");Check(TGTabButtons(nativeHost).count==5,@"original controls remain discoverable");
+        Check(fabs(nativeHost.frame.origin.x-18)<1 && fabs(nativeHost.frame.size.height-62)<1,@"floating bar insets and height");
+        for(UITabBarItem *item in systemBar.items) [systemBar.delegate tabBar:systemBar didSelectItem:item];
+        Check(self.forwardedActions==5,@"all five original actions forwarded exactly once");
+        [adapter restore];Check(CGRectEqualToRect(nativeHost.frame,savedFrame),@"original host geometry restored");
+        for(UIView *b in five) Check(b.alpha==1 && !b.hidden,@"original visibility restored");
+        [nativeHost removeFromSuperview];[passed addObject:@"native five-tab forwarding, floating geometry and reversible visibility"];
+        UIButton *counter=[UIButton buttonWithType:UIButtonTypeSystem];counter.frame=CGRectMake(0,0,52,96);[counter setImage:[UIImage systemImageNamed:@"heart"] forState:UIControlStateNormal];[counter setTitle:@"1234567" forState:UIControlStateNormal];[counter layoutIfNeeded];
+        [glass beginPass];[glass applyToView:counter category:@"videoControls"];[glass endPass];
+        UIVisualEffectView *small=nil;for(UIView *v in counter.subviews) if([v isKindOfClass:UIVisualEffectView.class]) small=(id)v;
+        Check(small.bounds.size.height<60,@"counter must not enlarge glass plate");[glass restoreAll];[passed addObject:@"icon-sized video plate independent of counter"];
         UINavigationBar *nav=[[UINavigationBar alloc] initWithFrame:CGRectMake(0,0,350,64)];
         UINavigationBarAppearance *original=[nav.standardAppearance copy];original.backgroundColor=UIColor.greenColor;nav.standardAppearance=original;
         [glass beginPass];[glass applyToNativeBar:nav];[glass endPass];[glass restoreAll];
