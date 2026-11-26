@@ -16,6 +16,7 @@
 @property(nonatomic) NSInteger selected;
 @property(nonatomic,strong) UITabBar *nativeBar;
 @property(nonatomic,strong) NSArray<NSNumber *> *hiddenStates;
+@property(nonatomic,strong) NSArray<NSNumber *> *alphas;
 @property(nonatomic) BOOL dragging;
 @end
 @implementation TGFloatingBar
@@ -36,9 +37,9 @@
         UIGlassEffect *selection=[UIGlassEffect effectWithStyle:UIGlassEffectStyleRegular];selection.interactive=YES;
         _lens=[[UIVisualEffectView alloc] initWithEffect:selection];_lens.accessibilityIdentifier=@"TikTokGlass.ActiveGlass";
         [_container.contentView addSubview:_body];[_container.contentView addSubview:_lens];[host insertSubview:_container atIndex:0];
-        NSMutableArray *items=[NSMutableArray new],*hidden=[NSMutableArray new];BOOL native=YES;
+        NSMutableArray *items=[NSMutableArray new],*hidden=[NSMutableArray new],*alphas=[NSMutableArray new];BOOL native=YES;
         for(NSUInteger i=0;i<buttons.count;i++) {
-            UIView *button=buttons[i];[hidden addObject:@(button.hidden)];UIImage *image=nil;NSString *title=nil;
+            UIView *button=buttons[i];[hidden addObject:@(button.hidden)];[alphas addObject:@(button.alpha)];UIImage *image=nil;NSString *title=nil;
             if([button isKindOfClass:UIButton.class]) {image=((UIButton *)button).currentImage;title=((UIButton *)button).currentTitle;}
             for(UIView *child in button.subviews) {if(!image && [child isKindOfClass:UIImageView.class]) image=((UIImageView *)child).image;if(!title && [child isKindOfClass:UILabel.class]) title=((UILabel *)child).text;}
             BOOL actionable=NO;
@@ -47,12 +48,12 @@
             UITabBarItem *item=[[UITabBarItem alloc] initWithTitle:title image:image tag:i];
             if([button isKindOfClass:UIButton.class]) item.selectedImage=[(UIButton *)button imageForState:UIControlStateSelected] ?: image;
             item.accessibilityLabel=button.accessibilityLabel ?: title;[items addObject:item];
-        }_hiddenStates=hidden;
+        }_hiddenStates=hidden;_alphas=alphas;
         if(native) {
             _nativeBar=[[UITabBar alloc] initWithFrame:host.bounds];_nativeBar.accessibilityIdentifier=@"TikTokGlass.NativeTabBar";
             _nativeBar.delegate=self;_nativeBar.items=items;_nativeBar.itemPositioning=UITabBarItemPositioningFill;
             // Keep UIKit's default iOS 26 material and selection lens. Do not replace its private subviews or gestures.
-            [host addSubview:_nativeBar];_container.hidden=YES;for(UIView *button in buttons) button.hidden=YES;
+            [host addSubview:_nativeBar];_container.hidden=YES;for(UIView *button in buttons) button.alpha=0;
         } else {
             UIPanGestureRecognizer *pan=[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panned:)];pan.delegate=self;[host addGestureRecognizer:pan];[_gestures addObject:pan];
         }
@@ -103,7 +104,7 @@
         button.frame=CGRectMake(slot*i,0,slot,62);
         if(!self.dragging && (([button isKindOfClass:UIControl.class] && [(UIControl *)button isSelected]) || (button.accessibilityTraits&UIAccessibilityTraitSelected))) self.selected=i;
     }
-    if(self.nativeBar) {self.nativeBar.selectedItem=self.nativeBar.items[self.selected];for(UIView *button in self.buttons) button.hidden=YES;return;}
+    if(self.nativeBar) {self.nativeBar.selectedItem=self.nativeBar.items[self.selected];for(UIView *button in self.buttons) button.alpha=0;return;}
     if(self.dragging) return;
     CGRect target=CGRectMake(slot*self.selected+3,4,slot-6,54);
     self.lens.layer.cornerRadius=27;self.lens.clipsToBounds=YES;
@@ -113,7 +114,7 @@
 }
 - (void)restore {
     [self.nativeBar removeFromSuperview];[self.container removeFromSuperview];self.host.frame=self.originalFrame;self.host.backgroundColor=self.background;self.host.clipsToBounds=self.clipped;
-    for(NSUInteger i=0;i<self.buttons.count;i++) {UIView *button=self.buttons[i];button.hidden=self.hiddenStates[i].boolValue;button.frame=self.frames[i].CGRectValue;button.backgroundColor=self.colors[i]==NSNull.null?nil:self.colors[i];if([button isKindOfClass:UIControl.class]) [(UIControl *)button removeTarget:self action:@selector(tapped:) forControlEvents:UIControlEventTouchUpInside];}
+    for(NSUInteger i=0;i<self.buttons.count;i++) {UIView *button=self.buttons[i];button.hidden=self.hiddenStates[i].boolValue;button.alpha=self.alphas[i].doubleValue;button.frame=self.frames[i].CGRectValue;button.backgroundColor=self.colors[i]==NSNull.null?nil:self.colors[i];if([button isKindOfClass:UIControl.class]) [(UIControl *)button removeTarget:self action:@selector(tapped:) forControlEvents:UIControlEventTouchUpInside];}
     for(UIGestureRecognizer *gesture in self.gestures) [gesture.view removeGestureRecognizer:gesture];
     for(UIView *v in self.backgrounds) v.hidden=NO;
 }
